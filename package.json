@@ -4,8 +4,8 @@
   "description": "纯前端图片压缩工具",
   "main": "index.html",
   "scripts": {
-    "dev": "npx typescript --watch",
-    "build": "npx typescript",
+    "dev": "npx tsc --watch",
+    "build": "npx tsc",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
