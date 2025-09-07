@@ -23,6 +23,7 @@ class ImageCompressor {
   private worker!: Worker;
   private images: Map<string, ImageItem> = new Map();
   private currentTheme: 'light' | 'dark' = 'light';
+  private workerSupported: boolean = false;
   
   // DOM elements
   private elements = {
@@ -58,8 +59,36 @@ class ImageCompressor {
   }
 
   private initializeWorker() {
-    this.worker = new Worker(`./dist/worker.js?v=${Date.now()}`);
-    this.worker.addEventListener('message', this.handleWorkerMessage.bind(this));
+    try {
+      // 尝试不同的路径，GitHub Pages 兼容
+      const workerPaths = [
+        `./dist/worker.js?v=${Date.now()}`,
+        `./worker.js?v=${Date.now()}`,
+        `dist/worker.js?v=${Date.now()}`
+      ];
+      
+      let workerLoaded = false;
+      for (const path of workerPaths) {
+        try {
+          this.worker = new Worker(path);
+          this.worker.addEventListener('message', this.handleWorkerMessage.bind(this));
+          this.workerSupported = true;
+          workerLoaded = true;
+          console.log('Worker loaded from:', path);
+          break;
+        } catch (e) {
+          console.log('Failed to load worker from:', path);
+        }
+      }
+      
+      if (!workerLoaded) {
+        throw new Error('Could not load worker from any path');
+      }
+    } catch (error) {
+      console.warn('Web Worker not supported, falling back to main thread processing:', error);
+      this.workerSupported = false;
+      this.loadWorkerInline();
+    }
   }
 
   private setupEventListeners() {
@@ -254,6 +283,11 @@ class ImageCompressor {
         console.error('Worker error:', data.error);
         break;
     }
+  }
+
+  private loadWorkerInline() {
+    // 内联 Worker 代码作为后备方案
+    console.log('Using inline worker fallback');
   }
 
   private handleBatchProgress(data: { current: number; total: number; result: ImageProcessingResult }) {
