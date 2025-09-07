@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": false,
+    "sourceMap": false,
+    "skipLibCheck": true,
+    "types": ["jest", "@playwright/test", "jsdom"],
+    "lib": ["ES2018", "DOM", "WebWorker"]
+  },
+  "include": [
+    "tests/**/*.ts",
+    "types/**/*.d.ts",
+    "script.ts",
+    "worker.ts", 
+    "utils.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

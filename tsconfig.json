@@ -14,11 +14,13 @@
     "sourceMap": true
   },
   "include": [
-    "*.ts",
-    "**/*.ts"
+    "script.ts",
+    "worker.ts",
+    "utils.ts"
   ],
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "tests"
   ]
 }
