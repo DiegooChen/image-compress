@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片压缩工具 - 单文件版</title>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <style>
+:root {
+  /* 浅色主题 */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #e9ecef;
+  --text-primary: #212529;
+  --text-secondary: #6c757d;
+  --border-color: #dee2e6;
+  --accent-color: #0066cc;
+  --accent-hover: #0056b3;
+  --success-color: #28a745;
+  --warning-color: #ffc107;
+  --error-color: #dc3545;
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  --shadow-hover: 0 4px 20px rgba(0, 0, 0, 0.15);
+  --border-radius: 8px;
+  --transition: all 0.3s ease;
+}
+
+[data-theme="dark"] {
+  /* 暗色主题 */
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #2d2d2d;
+  --bg-tertiary: #404040;
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0b0;
+  --border-color: #404040;
+  --accent-color: #4da3e0;
+  --accent-hover: #3d8bbd;
+  --success-color: #5cb85c;
+  --warning-color: #f0ad4e;
+  --error-color: #d9534f;
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  --shadow-hover: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  transition: var(--transition);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* 标题区域 */
+.header {
+  background: var(--bg-primary);
+  border-radius: var(--border-radius);
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent-color);
+}
+
+.theme-toggle {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 1.2rem;
+}
+
+.theme-toggle:hover {
+  background: var(--accent-color);
+  color: white;
+  transform: scale(1.05);
+}
+
+/* 设置面板 */
+.settings-panel {
+  background: var(--bg-primary);
+  border-radius: var(--border-radius);
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setting-group label {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.slider-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+input[type="range"] {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-tertiary);
+  outline: none;
+  -webkit-appearance: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  cursor: pointer;
+  border: none;
+}
+
+.input-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+input[type="number"] {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+/* 按钮样式 */
+.btn-primary, .btn-secondary, .btn-link {
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-primary {
+  background: var(--accent-color);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+.btn-secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+  background: var(--border-color);
+}
+
+.btn-link {
+  background: transparent;
+  color: var(--accent-color);
+  padding: 0;
+  font-size: inherit;
+}
+
+.btn-link:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+/* 上传区域 */
+.upload-area {
+  background: var(--bg-primary);
+  border: 2px dashed var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 40px;
+  text-align: center;
+  margin-bottom: 20px;
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.upload-area:hover, .upload-area.drag-over {
+  border-color: var(--accent-color);
+  background: var(--bg-secondary);
+  transform: scale(1.02);
+}
+
+.upload-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.upload-icon {
+  font-size: 3rem;
+  margin-bottom: 10px;
+}
+
+.upload-content h3 {
+  font-size: 1.5rem;
+  margin-bottom: 5px;
+}
+
+.file-info {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* 进度条 */
+.progress-section {
+  background: var(--bg-primary);
+  border-radius: var(--border-radius);
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-color), var(--success-color));
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  text-align: center;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* 操作按钮区域 */
+.actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+/* 图片列表 */
+.image-list {
+  display: grid;
+  gap: 20px;
+}
+
+.image-item {
+  background: var(--bg-primary);
+  border-radius: var(--border-radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  position: relative;
+  transition: var(--transition);
+}
+
+.image-item:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.image-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.image-preview img {
+  max-width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+}
+
+.image-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.info-value {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.compression-ratio {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--success-color);
+}
+
+.download-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+/* 统计信息 */
+.stats {
+  background: var(--bg-primary);
+  border-radius: var(--border-radius);
+  padding: 20px;
+  margin-top: 20px;
+  box-shadow: var(--shadow);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 15px;
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 5px;
+}
+
+.stat-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--accent-color);
+}
+
+/* 加载状态 */
+.loading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid var(--bg-tertiary);
+  border-top: 4px solid var(--accent-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading-text {
+  color: white;
+  margin-top: 20px;
+  font-size: 1.1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .container {
+    padding: 10px;
+  }
+  
+  .title {
+    font-size: 1.5rem;
+  }
+  
+  .settings-panel {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .image-item {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  
+  .actions {
+    flex-direction: column;
+  }
+  
+  .upload-area {
+    padding: 20px;
+  }
+  
+  .upload-icon {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-content {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .input-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* 状态类 */
+.processing {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.success {
+  border-left: 4px solid var(--success-color);
+}
+
+.error {
+  border-left: 4px solid var(--error-color);
+}
+
+/* 动画 */
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 标题和控制区域 -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="title">图片压缩工具</h1>
+                <div class="controls">
+                    <button id="theme-toggle" class="theme-toggle" title="切换主题">
+                        <span class="theme-icon">🌓</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 设置面板 -->
+        <section class="settings-panel">
+            <div class="setting-group">
+                <label for="quality-slider">压缩质量:</label>
+                <div class="slider-group">
+                    <input type="range" id="quality-slider" min="0.1" max="1" step="0.1" value="0.8">
+                    <span id="quality-value">0.8</span>
+                </div>
+            </div>
+            <div class="setting-group">
+                <label for="max-width">最大宽度 (px):</label>
+                <div class="input-group">
+                    <input type="number" id="max-width" min="100" max="5000" value="2000">
+                    <button id="reset-size" class="btn-secondary">原尺寸</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 上传区域 -->
+        <section class="upload-area" id="upload-area">
+            <div class="upload-content">
+                <div class="upload-icon">📸</div>
+                <h3>拖拽图片到这里</h3>
+                <p>或者 <button id="file-select" class="btn-link">选择文件</button></p>
+                <p class="file-info">支持 JPEG, PNG, WebP, AVIF 格式</p>
+                <input type="file" id="file-input" multiple accept="image/*" hidden>
+            </div>
+        </section>
+
+        <!-- 进度显示 -->
+        <section class="progress-section" id="progress-section" style="display: none;">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <div class="progress-text">
+                <span id="progress-current">0</span> / <span id="progress-total">0</span> 
+                - <span id="progress-percent">0%</span>
+            </div>
+        </section>
+
+        <!-- 操作按钮 -->
+        <section class="actions" id="actions" style="display: none;">
+            <button id="clear-all" class="btn-secondary">清空列表</button>
+            <button id="download-all" class="btn-primary">下载全部 (ZIP)</button>
+        </section>
+
+        <!-- 图片列表 -->
+        <section class="image-list" id="image-list">
+        </section>
+
+        <!-- 统计信息 -->
+        <section class="stats" id="stats" style="display: none;">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-label">总图片数:</span>
+                    <span class="stat-value" id="total-count">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">原始总大小:</span>
+                    <span class="stat-value" id="original-size">0 KB</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">压缩后总大小:</span>
+                    <span class="stat-value" id="compressed-size">0 KB</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">总压缩率:</span>
+                    <span class="stat-value" id="compression-ratio">0%</span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- 加载提示 -->
+    <div class="loading" id="loading" style="display: none;">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">处理中...</div>
+    </div>
+
+    <script>
+// EXIF orientation constants
+const EXIF_ORIENTATIONS = {
+    1: 0,      // normal
+    2: 0,      // flip horizontal
+    3: 180,    // rotate 180
+    4: 180,    // flip vertical
+    5: 90,     // transpose
+    6: 90,     // rotate 90
+    7: -90,    // transverse
+    8: -90     // rotate -90
+};
+
+// Extract EXIF orientation from image
+function getExifOrientation(arrayBuffer) {
+    try {
+        const dataView = new DataView(arrayBuffer);
+        
+        // Check if it's a JPEG file
+        if (dataView.byteLength < 4 || dataView.getUint16(0) !== 0xFFD8) return 1;
+        
+        let offset = 2;
+        
+        while (offset < dataView.byteLength - 4) {
+            // Check bounds before reading marker
+            if (offset + 2 > dataView.byteLength) break;
+            const marker = dataView.getUint16(offset);
+            
+            if (marker === 0xFFE1) { // APP1 marker (EXIF)
+                // Check segment length bounds
+                if (offset + 4 > dataView.byteLength) break;
+                const segmentLength = dataView.getUint16(offset + 2);
+                if (offset + segmentLength > dataView.byteLength) break;
+                
+                const exifOffset = offset + 4;
+                
+                // Check EXIF header bounds
+                if (exifOffset + 10 > dataView.byteLength) break;
+                if (dataView.getUint32(exifOffset) === 0x45786966) { // "Exif"
+                    const tiffOffset = exifOffset + 6;
+                    
+                    // Check TIFF header bounds
+                    if (tiffOffset + 8 > dataView.byteLength) break;
+                    const isLittleEndian = dataView.getUint16(tiffOffset) === 0x4949;
+                    
+                    const ifdOffset = dataView.getUint32(tiffOffset + 4, isLittleEndian) + tiffOffset;
+                    
+                    // Check IFD bounds
+                    if (ifdOffset + 2 > dataView.byteLength) break;
+                    const numEntries = dataView.getUint16(ifdOffset, isLittleEndian);
+                    
+                    // Validate numEntries to prevent excessive processing
+                    if (numEntries > 1000) break;
+                    
+                    for (let i = 0; i < numEntries; i++) {
+                        const entryOffset = ifdOffset + 2 + (i * 12);
+                        
+                        // Check entry bounds
+                        if (entryOffset + 12 > dataView.byteLength) break;
+                        const tag = dataView.getUint16(entryOffset, isLittleEndian);
+                        
+                        if (tag === 0x0112) { // Orientation tag
+                            const orientation = dataView.getUint16(entryOffset + 8, isLittleEndian);
+                            return (orientation >= 1 && orientation <= 8) ? orientation : 1;
+                        }
+                    }
+                }
+            }
+            
+            // Move to next segment
+            if (offset + 4 > dataView.byteLength) break;
+            const segmentLength = dataView.getUint16(offset + 2);
+            offset += 2 + segmentLength;
+            
+            // Prevent infinite loops
+            if (segmentLength === 0) break;
+        }
+    } catch (error) {
+        console.warn('EXIF orientation parsing failed:', error);
+    }
+    
+    return 1; // Default orientation
+}
+
+// Apply rotation to canvas based on EXIF orientation
+function applyOrientation(canvas, ctx, orientation) {
+    const { width, height } = canvas;
+    
+    switch (orientation) {
+        case 2: // flip horizontal
+            ctx.translate(width, 0);
+            ctx.scale(-1, 1);
+            break;
+        case 3: // rotate 180°
+            ctx.translate(width, height);
+            ctx.rotate(Math.PI);
+            break;
+        case 4: // flip vertical
+            ctx.translate(0, height);
+            ctx.scale(1, -1);
+            break;
+        case 5: // transpose
+            ctx.rotate(0.5 * Math.PI);
+            ctx.scale(1, -1);
+            break;
+        case 6: // rotate 90°
+            ctx.rotate(0.5 * Math.PI);
+            ctx.translate(0, -height);
+            break;
+        case 7: // transverse
+            ctx.rotate(0.5 * Math.PI);
+            ctx.translate(width, -height);
+            ctx.scale(-1, 1);
+            break;
+        case 8: // rotate -90°
+            ctx.rotate(-0.5 * Math.PI);
+            ctx.translate(-width, 0);
+            break;
+    }
+}
+
+// Calculate new dimensions while maintaining aspect ratio
+function calculateDimensions(originalWidth, originalHeight, maxWidth) {
+    if (maxWidth <= 0 || (originalWidth <= maxWidth && originalHeight <= maxWidth)) {
+        return { width: originalWidth, height: originalHeight };
+    }
+    
+    const aspectRatio = originalWidth / originalHeight;
+    
+    if (originalWidth > originalHeight) {
+        return {
+            width: maxWidth,
+            height: Math.round(maxWidth / aspectRatio)
+        };
+    } else {
+        return {
+            width: Math.round(maxWidth * aspectRatio),
+            height: maxWidth
+        };
+    }
+}
+
+// Process a single image in main thread
+async function processImage(task) {
+    let imageBitmap = null;
+    
+    try {
+        const { id, file, quality, maxWidth, outputFormat = 'image/jpeg' } = task;
+        
+        // Validate file size (limit to ~50MB to prevent memory issues)
+        if (file.size > 50 * 1024 * 1024) {
+            throw new Error('文件大小超出限制（最大50MB）');
+        }
+        
+        // Read file as array buffer for EXIF
+        const arrayBuffer = await file.arrayBuffer();
+        const orientation = getExifOrientation(arrayBuffer);
+        
+        // Create image from file with error handling
+        try {
+            imageBitmap = await createImageBitmap(file);
+        } catch (bitmapError) {
+            throw new Error('无法创建图像位图，可能文件已损坏');
+        }
+        
+        const { width: originalWidth, height: originalHeight } = imageBitmap;
+        
+        // Validate image dimensions
+        if (originalWidth <= 0 || originalHeight <= 0) {
+            throw new Error('无效的图像尺寸');
+        }
+        
+        // Check for extremely large images that might cause memory issues
+        if (originalWidth * originalHeight > 50000000) { // ~50MP
+            console.warn('Processing very large image:', originalWidth, 'x', originalHeight);
+        }
+        
+        // Calculate new dimensions
+        const { width: newWidth, height: newHeight } = calculateDimensions(originalWidth, originalHeight, maxWidth);
+        
+        // Validate new dimensions
+        if (newWidth <= 0 || newHeight <= 0) {
+            throw new Error('计算的新尺寸无效');
+        }
+        
+        // Create canvas for processing
+        const canvas = document.createElement('canvas');
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+        const ctx = canvas.getContext('2d');
+        
+        if (!ctx) {
+            throw new Error('无法创建canvas context');
+        }
+        
+        // Apply EXIF orientation if needed
+        if (orientation > 1) {
+            try {
+                applyOrientation(canvas, ctx, orientation);
+            } catch (orientationError) {
+                console.warn('EXIF orientation application failed, using default:', orientationError);
+            }
+        }
+        
+        // Draw and resize image
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        
+        try {
+            ctx.drawImage(imageBitmap, 0, 0, newWidth, newHeight);
+        } catch (drawError) {
+            throw new Error('图像绘制失败：' + (drawError instanceof Error ? drawError.message : String(drawError)));
+        }
+        
+        // Convert to blob
+        let compressedBlob;
+        try {
+            compressedBlob = await new Promise((resolve, reject) => {
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        resolve(blob);
+                    } else {
+                        reject(new Error('Failed to convert canvas to blob'));
+                    }
+                }, outputFormat, outputFormat.includes('jpeg') ? quality : undefined);
+            });
+        } catch (convertError) {
+            throw new Error('图像转换失败：' + (convertError instanceof Error ? convertError.message : String(convertError)));
+        }
+        
+        // Create data URLs for preview
+        const originalDataUrl = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error('读取原始文件失败'));
+            reader.readAsDataURL(file);
+        });
+        
+        const compressedDataUrl = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error('读取压缩文件失败'));
+            reader.readAsDataURL(compressedBlob);
+        });
+        
+        const originalSize = file.size;
+        const compressedSize = compressedBlob.size;
+        const compressionRatio = Math.round((1 - compressedSize / originalSize) * 100);
+        
+        return {
+            id,
+            success: true,
+            originalSize,
+            compressedSize,
+            originalDimensions: { width: originalWidth, height: originalHeight },
+            compressedDimensions: { width: newWidth, height: newHeight },
+            compressedBlob,
+            originalDataUrl,
+            compressedDataUrl,
+            compressionRatio
+        };
+        
+    } catch (error) {
+        console.error('Image processing error:', error);
+        return {
+            id: task.id,
+            success: false,
+            originalSize: task.file.size,
+            compressedSize: 0,
+            originalDimensions: { width: 0, height: 0 },
+            compressedDimensions: { width: 0, height: 0 },
+            compressionRatio: 0,
+            error: error instanceof Error ? error.message : '未知错误'
+        };
+    } finally {
+        // Clean up resources
+        if (imageBitmap) {
+            imageBitmap.close();
+        }
+    }
+}
+
+// Main application code
+class ImageCompressor {
+    constructor() {
+        this.images = new Map();
+        this.currentTheme = 'light';
+        
+        // DOM elements
+        this.elements = {
+            themeToggle: document.getElementById('theme-toggle'),
+            qualitySlider: document.getElementById('quality-slider'),
+            qualityValue: document.getElementById('quality-value'),
+            maxWidthInput: document.getElementById('max-width'),
+            resetSizeBtn: document.getElementById('reset-size'),
+            uploadArea: document.getElementById('upload-area'),
+            fileInput: document.getElementById('file-input'),
+            fileSelectBtn: document.getElementById('file-select'),
+            progressSection: document.getElementById('progress-section'),
+            progressFill: document.getElementById('progress-fill'),
+            progressCurrent: document.getElementById('progress-current'),
+            progressTotal: document.getElementById('progress-total'),
+            progressPercent: document.getElementById('progress-percent'),
+            actions: document.getElementById('actions'),
+            clearAllBtn: document.getElementById('clear-all'),
+            downloadAllBtn: document.getElementById('download-all'),
+            imageList: document.getElementById('image-list'),
+            stats: document.getElementById('stats'),
+            totalCount: document.getElementById('total-count'),
+            originalSize: document.getElementById('original-size'),
+            compressedSize: document.getElementById('compressed-size'),
+            compressionRatio: document.getElementById('compression-ratio'),
+            loading: document.getElementById('loading'),
+        };
+
+        this.setupEventListeners();
+        this.initializeTheme();
+    }
+
+    setupEventListeners() {
+        // Theme toggle
+        this.elements.themeToggle.addEventListener('click', this.toggleTheme.bind(this));
+        
+        // Quality slider
+        this.elements.qualitySlider.addEventListener('input', this.updateQualityValue.bind(this));
+        
+        // Reset size button
+        this.elements.resetSizeBtn.addEventListener('click', () => {
+            this.elements.maxWidthInput.value = '2000';
+        });
+        
+        // File selection
+        this.elements.fileSelectBtn.addEventListener('click', () => {
+            this.elements.fileInput.click();
+        });
+        
+        this.elements.fileInput.addEventListener('change', this.handleFileSelect.bind(this));
+        
+        // Drag and drop
+        this.setupDragAndDrop();
+        
+        // Action buttons
+        this.elements.clearAllBtn.addEventListener('click', this.clearAll.bind(this));
+        this.elements.downloadAllBtn.addEventListener('click', this.downloadAll.bind(this));
+    }
+
+    initializeTheme() {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        this.setTheme(savedTheme);
+    }
+
+    toggleTheme() {
+        this.setTheme(this.currentTheme === 'light' ? 'dark' : 'light');
+    }
+
+    setTheme(theme) {
+        this.currentTheme = theme;
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+        
+        const icon = this.elements.themeToggle.querySelector('.theme-icon');
+        if (icon) {
+            icon.textContent = theme === 'light' ? '🌓' : '☀️';
+        }
+    }
+
+    updateQualityValue() {
+        this.elements.qualityValue.textContent = this.elements.qualitySlider.value;
+    }
+
+    setupDragAndDrop() {
+        const uploadArea = this.elements.uploadArea;
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, this.preventDefaults.bind(this), false);
+        });
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, () => {
+                uploadArea.classList.add('drag-over');
+            }, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, () => {
+                uploadArea.classList.remove('drag-over');
+            }, false);
+        });
+        
+        uploadArea.addEventListener('drop', this.handleDrop.bind(this), false);
+    }
+
+    preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt?.files;
+        
+        if (files) {
+            this.handleFiles(Array.from(files));
+        }
+    }
+
+    handleFileSelect(e) {
+        const target = e.target;
+        const files = target.files;
+        
+        if (files) {
+            this.handleFiles(Array.from(files));
+        }
+    }
+
+    async handleFiles(files) {
+        const imageFiles = files.filter(file => file.type.startsWith('image/'));
+        
+        if (imageFiles.length === 0) {
+            alert('请选择有效的图片文件');
+            return;
+        }
+
+        // Create image items
+        const newImages = [];
+        for (const file of imageFiles) {
+            const id = this.generateId();
+            const originalDataUrl = await this.fileToDataUrl(file);
+            const dimensions = await this.getImageDimensions(originalDataUrl);
+            
+            const imageItem = {
+                id,
+                file,
+                originalDataUrl,
+                originalSize: file.size,
+                originalDimensions: dimensions,
+                status: 'pending'
+            };
+            
+            this.images.set(id, imageItem);
+            newImages.push(imageItem);
+        }
+
+        this.renderImages();
+        this.showSections();
+        this.processImages(newImages);
+    }
+
+    generateId() {
+        return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    }
+
+    fileToDataUrl(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.readAsDataURL(file);
+        });
+    }
+
+    getImageDimensions(dataUrl) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve({ width: img.width, height: img.height });
+            img.src = dataUrl;
+        });
+    }
+
+    async processImages(images) {
+        const quality = parseFloat(this.elements.qualitySlider.value);
+        const maxWidth = parseInt(this.elements.maxWidthInput.value) || 0;
+        
+        // Update progress
+        this.updateProgress(0, images.length);
+        
+        // Set images to processing state
+        images.forEach(image => {
+            image.status = 'processing';
+        });
+        
+        this.renderImages();
+
+        // Process images sequentially in main thread
+        for (let i = 0; i < images.length; i++) {
+            const image = images[i];
+            const task = {
+                id: image.id,
+                file: image.file,
+                quality,
+                maxWidth
+            };
+            
+            const result = await processImage(task);
+            
+            if (result.success) {
+                image.compressedDataUrl = result.compressedDataUrl;
+                image.compressedBlob = result.compressedBlob;
+                image.compressedSize = result.compressedSize;
+                image.compressedDimensions = result.compressedDimensions;
+                image.compressionRatio = result.compressionRatio;
+                image.status = 'completed';
+            } else {
+                image.error = result.error;
+                image.status = 'error';
+            }
+            
+            this.updateProgress(i + 1, images.length);
+            this.renderImages();
+            this.updateStats();
+        }
+        
+        setTimeout(() => {
+            this.elements.progressSection.style.display = 'none';
+        }, 1000);
+    }
+
+    updateProgress(current, total) {
+        const percent = Math.round((current / total) * 100);
+        
+        this.elements.progressFill.style.width = `${percent}%`;
+        this.elements.progressCurrent.textContent = current.toString();
+        this.elements.progressTotal.textContent = total.toString();
+        this.elements.progressPercent.textContent = `${percent}%`;
+    }
+
+    showSections() {
+        this.elements.progressSection.style.display = 'block';
+        this.elements.actions.style.display = 'flex';
+        this.elements.stats.style.display = 'block';
+    }
+
+    renderImages() {
+        this.elements.imageList.innerHTML = '';
+        
+        this.images.forEach(image => {
+            const imageElement = this.createImageElement(image);
+            this.elements.imageList.appendChild(imageElement);
+        });
+    }
+
+    createImageElement(image) {
+        const div = document.createElement('div');
+        div.className = `image-item fade-in ${image.status}`;
+        
+        const originalPreview = this.createPreviewElement('原图', image.originalDataUrl, image.originalDimensions);
+        const compressedPreview = this.createPreviewElement('压缩后', image.compressedDataUrl, image.compressedDimensions);
+        
+        const info = document.createElement('div');
+        info.className = 'image-info';
+        info.innerHTML = `
+            <div class="info-row">
+                <span class="info-label">文件名:</span>
+                <span class="info-value">${image.file.name}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">原始大小:</span>
+                <span class="info-value">${this.formatFileSize(image.originalSize)}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">压缩后大小:</span>
+                <span class="info-value">${image.compressedSize ? this.formatFileSize(image.compressedSize) : '处理中...'}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">压缩率:</span>
+                <span class="info-value compression-ratio">${image.compressionRatio ? image.compressionRatio + '%' : '-'}</span>
+            </div>
+            ${image.error ? `<div class="info-row"><span class="info-label">错误:</span><span class="info-value" style="color: var(--error-color);">${image.error}</span></div>` : ''}
+        `;
+        
+        div.appendChild(originalPreview);
+        div.appendChild(compressedPreview);
+        div.appendChild(info);
+        
+        if (image.status === 'completed' && image.compressedBlob) {
+            const downloadBtn = document.createElement('button');
+            downloadBtn.className = 'btn-primary download-btn';
+            downloadBtn.textContent = '下载';
+            downloadBtn.addEventListener('click', () => this.downloadSingle(image));
+            div.appendChild(downloadBtn);
+        }
+        
+        return div;
+    }
+
+    createPreviewElement(title, dataUrl, dimensions) {
+        const preview = document.createElement('div');
+        preview.className = 'image-preview';
+        
+        const titleElement = document.createElement('h4');
+        titleElement.textContent = title;
+        preview.appendChild(titleElement);
+        
+        if (dataUrl) {
+            const img = document.createElement('img');
+            img.src = dataUrl;
+            img.alt = title;
+            preview.appendChild(img);
+        } else {
+            const placeholder = document.createElement('div');
+            placeholder.style.cssText = 'width: 150px; height: 150px; background: var(--bg-tertiary); border-radius: var(--border-radius); display: flex; align-items: center; justify-content: center; color: var(--text-secondary);';
+            placeholder.textContent = '处理中...';
+            preview.appendChild(placeholder);
+        }
+        
+        if (dimensions) {
+            const dimensionsElement = document.createElement('div');
+            dimensionsElement.className = 'image-dimensions';
+            dimensionsElement.textContent = `${dimensions.width} × ${dimensions.height}`;
+            dimensionsElement.style.cssText = 'font-size: 0.9rem; color: var(--text-secondary); margin-top: 5px;';
+            preview.appendChild(dimensionsElement);
+        }
+        
+        return preview;
+    }
+
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 B';
+        
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    updateStats() {
+        const images = Array.from(this.images.values());
+        const completed = images.filter(img => img.status === 'completed');
+        
+        const totalCount = images.length;
+        const originalTotalSize = images.reduce((sum, img) => sum + img.originalSize, 0);
+        const compressedTotalSize = completed.reduce((sum, img) => sum + (img.compressedSize || 0), 0);
+        const overallCompressionRatio = originalTotalSize > 0 
+            ? Math.round((1 - compressedTotalSize / originalTotalSize) * 100) 
+            : 0;
+        
+        this.elements.totalCount.textContent = totalCount.toString();
+        this.elements.originalSize.textContent = this.formatFileSize(originalTotalSize);
+        this.elements.compressedSize.textContent = this.formatFileSize(compressedTotalSize);
+        this.elements.compressionRatio.textContent = overallCompressionRatio + '%';
+    }
+
+    clearAll() {
+        this.images.clear();
+        this.renderImages();
+        this.updateStats();
+        this.elements.progressSection.style.display = 'none';
+        this.elements.actions.style.display = 'none';
+        this.elements.stats.style.display = 'none';
+        this.elements.fileInput.value = '';
+    }
+
+    downloadSingle(image) {
+        if (!image.compressedBlob) return;
+        
+        const url = URL.createObjectURL(image.compressedBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `compressed_${image.file.name}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    async downloadAll() {
+        const completedImages = Array.from(this.images.values()).filter(img => img.status === 'completed' && img.compressedBlob);
+        
+        if (completedImages.length === 0) {
+            alert('没有可下载的图片');
+            return;
+        }
+
+        this.elements.loading.style.display = 'flex';
+        
+        try {
+            const zip = new JSZip();
+            
+            completedImages.forEach(image => {
+                if (image.compressedBlob) {
+                    zip.file(`compressed_${image.file.name}`, image.compressedBlob);
+                }
+            });
+            
+            const zipBlob = await zip.generateAsync({ type: 'blob' });
+            
+            const url = URL.createObjectURL(zipBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `compressed_images_${new Date().getTime()}.zip`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+        } catch (error) {
+            console.error('压缩下载失败:', error);
+            alert('下载失败，请重试');
+        } finally {
+            this.elements.loading.style.display = 'none';
+        }
+    }
+}
+
+// Initialize application when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => new ImageCompressor());
+} else {
+    new ImageCompressor();
+}
+    </script>
+</body>
+</html>

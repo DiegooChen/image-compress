@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片压缩工具</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- 标题和控制区域 -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="title">图片压缩工具</h1>
+                <div class="controls">
+                    <button id="theme-toggle" class="theme-toggle" title="切换主题">
+                        <span class="theme-icon">🌓</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 设置面板 -->
+        <section class="settings-panel">
+            <div class="setting-group">
+                <label for="quality-slider">压缩质量:</label>
+                <div class="slider-group">
+                    <input type="range" id="quality-slider" min="0.1" max="1" step="0.1" value="0.8">
+                    <span id="quality-value">0.8</span>
+                </div>
+            </div>
+            <div class="setting-group">
+                <label for="max-width">最大宽度 (px):</label>
+                <div class="input-group">
+                    <input type="number" id="max-width" min="100" max="5000" value="2000">
+                    <button id="reset-size" class="btn-secondary">原尺寸</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 上传区域 -->
+        <section class="upload-area" id="upload-area">
+            <div class="upload-content">
+                <div class="upload-icon">📸</div>
+                <h3>拖拽图片到这里</h3>
+                <p>或者 <button id="file-select" class="btn-link">选择文件</button></p>
+                <p class="file-info">支持 JPEG, PNG, WebP, AVIF 格式</p>
+                <input type="file" id="file-input" multiple accept="image/*" hidden>
+            </div>
+        </section>
+
+        <!-- 进度显示 -->
+        <section class="progress-section" id="progress-section" style="display: none;">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <div class="progress-text">
+                <span id="progress-current">0</span> / <span id="progress-total">0</span> 
+                - <span id="progress-percent">0%</span>
+            </div>
+        </section>
+
+        <!-- 操作按钮 -->
+        <section class="actions" id="actions" style="display: none;">
+            <button id="clear-all" class="btn-secondary">清空列表</button>
+            <button id="download-all" class="btn-primary">下载全部 (ZIP)</button>
+        </section>
+
+        <!-- 图片列表 -->
+        <section class="image-list" id="image-list">
+        </section>
+
+        <!-- 统计信息 -->
+        <section class="stats" id="stats" style="display: none;">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-label">总图片数:</span>
+                    <span class="stat-value" id="total-count">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">原始总大小:</span>
+                    <span class="stat-value" id="original-size">0 KB</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">压缩后总大小:</span>
+                    <span class="stat-value" id="compressed-size">0 KB</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">总压缩率:</span>
+                    <span class="stat-value" id="compression-ratio">0%</span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- 加载提示 -->
+    <div class="loading" id="loading" style="display: none;">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">处理中...</div>
+    </div>
+
+    <script src="dist/script.js"></script>
+</body>
+</html>
